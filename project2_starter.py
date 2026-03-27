@@ -41,7 +41,32 @@ def load_listing_results(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+
+    #Load file and parse
+    with open(html_path, "r", encoding="utf-8-sig") as f:
+        soup = BeautifulSoup(f, "html.parser")
+
+    seen = set()
+    results = []
+
+    #regex from href to get id
+    for a in soup.find_all("a", href = True):
+        match = re.search(r"/rooms/(\d+)", a["href"])
+        if not match:
+            continue
+        listing_id = match.group(1)
+
+        title = a.get("aria-label", "").strip()
+        if not title:
+            tag = a.find(["h3", "div", "span"])
+            title = tag.get_text(strip=True) if tag else ""
+        if listing_id not in seen and title:
+            seen.add(listing_id)
+            results.append((title,listing_id))
+    
+    return results
+        
+
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
