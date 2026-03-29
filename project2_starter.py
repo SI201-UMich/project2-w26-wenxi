@@ -8,7 +8,7 @@
 # Asked ChatGPT for hints on debugging and for suggestions on overall code structure
 #
 # Did your use of GenAI on this assignment align with your goals and guidelines in your Gen AI contract? If not, why?
-#
+# I used GenAI for hints on debugging and suggestions on code structure efficiencya and review on debugging tips, which all align with my goals and guidelines since I am not aimlessly copying code and actually take in what is produced.
 # --- ARGUMENTS & EXPECTED RETURN VALUES PROVIDED --- #
 # --- SEE INSTRUCTIONS FOR FULL DETAILS ON METHOD IMPLEMENTATION --- #
 
@@ -95,7 +95,104 @@ def get_listing_details(listing_id) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    
+    html_path = f"html_files/listing_{listing_id}.html"
+    with open(html_path, "r", encoding="utf-8-sig") as f:
+        soup = BeautifulSoup(f, "html.parser")
+
+    #policy number
+    policy_num = "Exempt"
+    texts = soup.get_text(separator="\n")
+    for line in texts.splitlines():
+        line = line.strip()
+        
+        if re.search(r"20\d{2}-00\d{4}STR", line):
+            policy_num = re.search(r"20\d{2}-00\d{4}").group()
+            break
+        if re.search(r"STR-000\d{4}", line):
+            policy_num = re.search(r"STR-000\d{4}", line).group()
+            break
+        if re.search(r"pending", line, re.IGNORECASE):
+            policy_num = "Pending"
+            break
+
+    #host type
+    host_type = "regular"
+    if soup.find(string=re.compile(r"Superhost", re.IGNORECASE)):
+        host_type = "Superhost"
+    
+    #host name "Hosted by"
+    host_name = ""
+    #common host name patterns
+    for tag in soup.find_all(["div", "span", "h2", "h3"]):
+        text = tag.get_text(strip=True)
+        if re.match(r"^Hosted by (.+)$", text, re.IGNORECASE):
+            host_name = re.match(r"^Hosted by (.+)$", text, re.IGNORECASE).group(1)
+            break
+    if not host_name:
+        # fallback: find any tag with "Hosted by"
+        match = re.search(r"Hosted by ([^\n<]+)", soup.get_text())
+        if match:
+            host_name = match.group(1).strip()
+    
+    #room_type
+    subtitle_text = ""
+    for tag in soup.find_all(["h2", "h3", "div", "span"]):
+        t = tag.get_text(strip=True)
+        if re.search(r"(private|shared|entire|room|suite|home|loft|apartment)", t, re.IGNORECASE):
+            subtitle_text = t
+            break
+ 
+    full_text = soup.get_text()
+    if re.search(r"private", full_text[:3000], re.IGNORECASE):
+        room_type = "Private Room"
+    elif re.search(r"shared", full_text[:3000], re.IGNORECASE):
+        room_type = "Shared Room"
+    else:
+        room_type = "Entire Room"
+ 
+    #Check subtitle specifically
+    for tag in soup.find_all(["h2", "h3"]):
+        t = tag.get_text(strip=True)
+        if "Private" in t:
+            room_type = "Private Room"
+            break
+        elif "Shared" in t:
+            room_type = "Shared Room"
+            break
+        elif any(w in t for w in ["Entire", "Home", "Loft", "Apartment", "Suite", "Guesthouse", "Condo"]):
+            room_type = "Entire Room"
+            break
+ 
+    #location_rating
+    location_rating = 0.0
+    # Look for "Location" near a rating number
+    for tag in soup.find_all(["div", "span"]):
+        t = tag.get_text(strip=True)
+        if re.match(r"^Location$", t, re.IGNORECASE):
+            # Try to find next sibling or parent's next text
+            parent = tag.parent
+            if parent:
+                parent_text = parent.get_text(strip=True)
+                m = re.search(r"Location\s+([\d.]+)", parent_text)
+                if m:
+                    location_rating = float(m.group(1))
+                    break
+ 
+    if location_rating == 0.0:
+        m = re.search(r"Location\s+([\d.]+)", soup.get_text())
+        if m:
+            location_rating = float(m.group(1))
+ 
+    return {
+        listing_id: {
+            "policy_number": policy_num,
+            "host_type": host_type,
+            "host_name": host_name,
+            "room_type": room_type,
+            "location_rating": location_rating,
+        }
+    }
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
