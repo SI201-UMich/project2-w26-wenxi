@@ -1,0 +1,35 @@
+Question 1: 
+ 
+I believe the current system provides inadequate accountability for short-term rentals in San Francisco. 
+The system is reactive rather than proactive as it only investigates listings after a complaint is filed, 
+which means many unlicensed hosts can operate for long periods without consequence. 
+This places the burden of enforcement on third parties like independent investigators or concerned residents rather 
+than on the government or Airbnb itself. The SWE Code of Ethics emphasizes that software engineers should act in the public interest, 
+which I think applies here to Airbnb as a platform. Airbnb could do more by automatically verifying policy numbers before allowing a 
+listing to go live, rather than simply displaying whatever the host enters in a text field. A more proactive approach would be for the city 
+to require Airbnb to cross-reference all listed policy numbers against the city's official registration database in real time, flagging or 
+removing listings that cannot be verified. Without this kind of systemic enforcement, the current complaint-based model will continue to 
+leave many violations unaddressed.
+ 
+Question 2:
+ 
+One important factor in the legality of web scraping is whether the data being accessed is truly public and whether the scraping 
+causes harm to the platform or its users. The Computer Fraud and Abuse Act (CFAA) has historically been interpreted broadly, meaning 
+that violating a website's Terms of Service could potentially be considered unauthorized access — even when the data itself is 
+publicly visible to any browser. This is a significant concern because it creates legal uncertainty for researchers, journalists, 
+and investigators who use scraping as a tool for accountability. I think the key distinction that courts and lawmakers should focus 
+on is intent and impact: scraping publicly available data for research or public interest purposes is fundamentally different from 
+scraping to undermine a platform's business or to harvest personal data maliciously. The law should reflect this difference more clearly
+ rather than treating all scraping under the same broad umbrella.
+ 
+Question 3: 
+ 
+First, I think it is important to consider whether the scraping respects the privacy and reasonable expectations of the individuals 
+whose data is being collected. Even if data is technically public, people who post information online often do so in a specific context. 
+For example, a host listing their property on Airbnb does not necessarily expect that data to be aggregated, analyzed, and cross-referenced with
+ government records. Before scraping, one should ask whether the people whose data is involved would reasonably consent to this use if asked. 
+ Second, the purpose and potential impact of the scraping should be carefully evaluated. Scraping for public accountability, such as identifying 
+ hosts who violate housing regulations, serves a clear social good. But the same technique used to build a mass surveillance database or to target 
+ individuals — as seen with Clearview AI — can cause serious harm. A useful guideline is to ask whether the scraping produces a net benefit to 
+ the public and whether that benefit outweighs the privacy costs to individuals. These two guidelines together — contextual privacy and public benefit — 
+ can help determine whether a scraping project is ethically justifiable.
