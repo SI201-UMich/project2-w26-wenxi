@@ -46,24 +46,37 @@ def load_listing_results(html_path) -> list[tuple]:
     with open(html_path, "r", encoding="utf-8-sig") as f:
         soup = BeautifulSoup(f, "html.parser")
 
-    seen = set()
     results = []
+    seen = set()
 
-    #regex from href to get id
-    for a in soup.find_all("a", href = True):
-        match = re.search(r"/rooms/(\d+)", a["href"])
+    #Extract listing IDs and match with titles from button aria-labels
+    for a in soup.find_all("a", href=True):
+        # Match both /rooms/ and /rooms/plus/ patterns
+        match = re.search(r"/rooms/(?:plus/)?(\d+)", a["href"])
         if not match:
             continue
         listing_id = match.group(1)
 
-        title = a.get("aria-label", "").strip()
-        if not title:
-            tag = a.find(["h3", "div", "span"])
-            title = tag.get_text(strip=True) if tag else ""
-        if listing_id not in seen and title:
+        if listing_id in seen:
+            continue
+
+        # Find the nearest button with 'Add to wishlist' aria-label
+        title = ""
+        container = a.parent
+
+        # Search in parent containers for the wishlist button
+        for level in range(5):
+            if container:
+                button = container.find("button", attrs={"aria-label": re.compile(r"Add to wishlist:")})
+                if button:
+                    title = button["aria-label"].replace("Add to wishlist:", "").strip()
+                    break
+                container = container.parent
+
+        if title and listing_id:
             seen.add(listing_id)
-            results.append((title,listing_id))
-    
+            results.append((title, listing_id))
+
     return results
         
 
@@ -103,18 +116,34 @@ def get_listing_details(listing_id) -> dict:
     #policy number
     policy_num = "Exempt"
     texts = soup.get_text(separator="\n")
+
+    # Check line by line for specific valid/status patterns first
     for line in texts.splitlines():
         line = line.strip()
-        
+
+        # Check for year format with STR suffix
         if re.search(r"20\d{2}-00\d{4}STR", line):
-            policy_num = re.search(r"20\d{2}-00\d{4}").group()
+            policy_num = re.search(r"20\d{2}-00\d{4}", line).group()
             break
+        # Check for STR-000XXXX format
         if re.search(r"STR-000\d{4}", line):
             policy_num = re.search(r"STR-000\d{4}", line).group()
             break
-        if re.search(r"pending", line, re.IGNORECASE):
+        # Check for pending status
+        if re.search(r"\bpending\b", line, re.IGNORECASE):
             policy_num = "Pending"
             break
+        # Check for exempt status
+        if re.search(r"\bexempt\b", line, re.IGNORECASE):
+            policy_num = "Exempt"
+            break
+
+    # If no valid pattern found, check for generic "Policy number:" (may span lines)
+    # This will catch invalid formats like plain numbers
+    if policy_num == "Exempt":
+        policy_match = re.search(r"Policy number:\s*(\d+)", texts, re.IGNORECASE)
+        if policy_match:
+            policy_num = policy_match.group(1)
 
     #host type
     host_type = "regular"
@@ -123,8 +152,8 @@ def get_listing_details(listing_id) -> dict:
     
     #host name "Hosted by"
     host_name = ""
-    #common host name patterns
-    for tag in soup.find_all(["div", "span", "h2", "h3"]):
+    # Look specifically in h2 tags for clean extraction
+    for tag in soup.find_all("h2"):
         text = tag.get_text(strip=True)
         if re.match(r"^Hosted by (.+)$", text, re.IGNORECASE):
             host_name = re.match(r"^Hosted by (.+)$", text, re.IGNORECASE).group(1)
@@ -166,23 +195,11 @@ def get_listing_details(listing_id) -> dict:
  
     """location_rating"""
     location_rating = 0.0
-    """Look for "Location" near a rating number"""
-    for tag in soup.find_all(["div", "span"]):
-        t = tag.get_text(strip=True)
-        if re.match(r"^Location$", t, re.IGNORECASE):
-            """Try to find next sibling or parent's next text"""
-            parent = tag.parent
-            if parent:
-                parent_text = parent.get_text(strip=True)
-                m = re.search(r"Location\s+([\d.]+)", parent_text)
-                if m:
-                    location_rating = float(m.group(1))
-                    break
- 
-    if location_rating == 0.0:
-        m = re.search(r"Location\s+([\d.]+)", soup.get_text())
-        if m:
-            location_rating = float(m.group(1))
+    """Look for "Location" followed by a rating number"""
+    # Use \s* to allow zero or more whitespace characters
+    m = re.search(r"Location\s*(\d+\.\d+)", soup.get_text())
+    if m:
+        location_rating = float(m.group(1))
     
     return {
         listing_id: {
@@ -316,7 +333,7 @@ def validate_policy_numbers(data) -> list[str]:
     # ==============================
     
     """Returns list of listing_ids with invalid policy number format."""
-    valid_pattern = re.compile(r"^(20\d{2}-00\d{4}STR|STR-000\d{4})$")
+    valid_pattern = re.compile(r"^(20\d{2}-00\d{4}|STR-000\d{4})$")
     invalid_ids = []
     for row in data:
         listing_id = row[1]
