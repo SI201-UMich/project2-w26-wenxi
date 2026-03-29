@@ -183,16 +183,15 @@ def get_listing_details(listing_id) -> dict:
         m = re.search(r"Location\s+([\d.]+)", soup.get_text())
         if m:
             location_rating = float(m.group(1))
- 
-    return {
-        listing_id: {
-            "policy_number": policy_num,
-            "host_type": host_type,
-            "host_name": host_name,
-            "room_type": room_type,
-            "location_rating": location_rating,
-        }
+    
+    listing_id = {
+        "policy_number": policy_num,
+        "host_type": host_type,
+        "host_name": host_name,
+        "room_type": room_type,
+        "location_rating": location_rating,
     }
+    return listing_id
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
