@@ -345,7 +345,20 @@ def google_scholar_searcher(query):
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    
+    url = f"https://scholar.google.com/scholar?q={query}"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, "html.parser")
+    
+    titles = []
+    for tag in soup.find_all("h3", class_="gs_rt"):
+        # strip any [PDF], [HTML] labels and get just the title text
+        for label in tag.find_all("span"):
+            label.decompose()
+        titles.append(tag.get_text(strip=True))
+    
+    return titles
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
