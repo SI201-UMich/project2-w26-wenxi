@@ -151,7 +151,7 @@ def get_listing_details(listing_id) -> dict:
     else:
         room_type = "Entire Room"
  
-    #Check subtitle specifically
+    """Check subtitle specifically"""
     for tag in soup.find_all(["h2", "h3"]):
         t = tag.get_text(strip=True)
         if "Private" in t:
@@ -164,13 +164,13 @@ def get_listing_details(listing_id) -> dict:
             room_type = "Entire Room"
             break
  
-    #location_rating
+    """location_rating"""
     location_rating = 0.0
-    # Look for "Location" near a rating number
+    """Look for "Location" near a rating number"""
     for tag in soup.find_all(["div", "span"]):
         t = tag.get_text(strip=True)
         if re.match(r"^Location$", t, re.IGNORECASE):
-            # Try to find next sibling or parent's next text
+            """Try to find next sibling or parent's next text"""
             parent = tag.parent
             if parent:
                 parent_text = parent.get_text(strip=True)
@@ -184,14 +184,15 @@ def get_listing_details(listing_id) -> dict:
         if m:
             location_rating = float(m.group(1))
     
-    listing_id = {
-        "policy_number": policy_num,
-        "host_type": host_type,
-        "host_name": host_name,
-        "room_type": room_type,
-        "location_rating": location_rating,
+    return {
+        listing_id: {
+            "policy_number": policy_num,
+            "host_type": host_type,
+            "host_name": host_name,
+            "room_type": room_type,
+            "location_rating": location_rating,
+        }
     }
-    return listing_id
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -313,7 +314,18 @@ def validate_policy_numbers(data) -> list[str]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    
+    """Returns list of listing_ids with invalid policy number format."""
+    valid_pattern = re.compile(r"^(20\d{2}-00\d{4}STR|STR-000\d{4})$")
+    invalid_ids = []
+    for row in data:
+        listing_id = row[1]
+        policy = row[2]
+        if policy in ("Pending", "Exempt"):
+            continue
+        if not valid_pattern.match(policy):
+            invalid_ids.append(listing_id)
+    return invalid_ids
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
