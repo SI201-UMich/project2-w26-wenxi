@@ -108,8 +108,9 @@ def get_listing_details(listing_id) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    
-    html_path = f"html_files/listing_{listing_id}.html"
+
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    html_path = os.path.join(base_dir, "html_files", f"listing_{listing_id}.html")
     with open(html_path, "r", encoding="utf-8-sig") as f:
         soup = BeautifulSoup(f, "html.parser")
 
@@ -381,6 +382,7 @@ def google_scholar_searcher(query):
     # ==============================
 
 
+
 class TestCases(unittest.TestCase):
     def setUp(self):
         self.base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -448,8 +450,10 @@ class TestCases(unittest.TestCase):
 
 
 def main():
-    detailed_data = create_listing_database(os.path.join("html_files", "search_results.html"))
-    output_csv(detailed_data, "airbnb_dataset.csv")
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    search_results_path = os.path.join(base_dir, "html_files", "search_results.html")
+    detailed_data = create_listing_database(search_results_path)
+    output_csv(detailed_data, os.path.join(base_dir, "airbnb_dataset.csv"))
 
 
 if __name__ == "__main__":
